@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>SimpleCanvas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="SimpleCanvas.js" type="text/javascript"></script>
+<script	type="text/javascript">
+
+
+
+window.onload = function(){
+
+	var x = 0;
+	
+	var draw = function draw(c){
+
+		// drawing…
+		c.clearRect(0,0, c.width, c.height);
+		x+= (c.dt*0.1);
+		c.fillRect( x, 10, 50, 50 );
+		c.beginPath();
+			c.moveTo( c.width*0.5, c.height*0.5 );
+			c.arc( c.width*0.5, c.height*0.5, c.width*0.3, 0, Math.PI*2, 0);
+		c.fill();
+		c.font = '40px Georgia';
+		c.fillText('Hello', 10, 40);
+
+	};
+	
+	if ( !SimpleCanvas( "canvas", draw ) ){
+		console.error( 'No canvas support' );
+	}	
+
+};
+</script>
+<style type="text/css">
+	body, html{
+		width: 100%;
+		height: 100%;
+		margin: 0px;
+		padding: 0px;
+	}
+	#canvas-holder{
+		width: 100%;
+		height: 100%;
+		margin: 0px auto;
+		
+	}
+	#canvas{
+		display: block;
+		width: 100%;
+		height: 100%;
+		display: block;
+		background: #f5f5f5;
+	}	
+</style>
+</head>
+<body>
+<div id="canvas-holder">
+	<canvas id="canvas" width="300px" height="300px">Your browser is too old. Update now!</canvas>
+</div>
+
+</body>
+</html>
