@@ -17,7 +17,7 @@
 
 	SimpleCanvas makes use of Paul Irish's polyfill for request animation frame (se below).	
 */
-var SimpleCanvas = function SimpleCanvas( canvas, draw ){
+var SimpleCanvas = function SimpleCanvas( canvas, c, draw ){
 	
 	// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 	// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
@@ -54,7 +54,8 @@ var SimpleCanvas = function SimpleCanvas( canvas, draw ){
 
 	// SimpleCanvas
 	var canvas = document.getElementById( canvas );
-	var c = canvas.getContext('2d');
+	vari = canvas.getContext('2d');
+	var c = vari;
 	
 	if ( c ){
 		var canvasHolder = document.getElementById('canvas-holder');
