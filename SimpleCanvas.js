@@ -1,24 +1,9 @@
 /*
 	Simple Canvas helper lib by Peter Koraca
-	
-	Usage:
-	- include this script in your header
-	- when document loads call SimpleCanvas( canvasID, draw );
-	- SimpleCanvas accepts two arguments
-		- canvasID: canvas element id
-		- draw: draw callback function (with one argument - canvas)
-	- SimpleCanvas returns true (if context was qcquired and false if not)
-	
-	
-	SimpleCanvas adds the following properties to context:
-	- c.dt delta time passed since the last frame
-	- c.width context width (changes on window resize)
-	- c.height context height
-
-	SimpleCanvas makes use of Paul Irish's polyfill for request animation frame (se below).	
+	MIT Licence
 */
-var SimpleCanvas = function SimpleCanvas( canvas, c, draw ){
-	
+var SimpleCanvas = function SimpleCanvas( canvasid ){
+
 	// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 	// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 	 
@@ -53,71 +38,71 @@ var SimpleCanvas = function SimpleCanvas( canvas, c, draw ){
 
 
 	// SimpleCanvas
-	var canvas = document.getElementById( canvas );
-	vari = canvas.getContext('2d');
-	var c = vari;
+	var canvas = document.getElementById( canvasid );
+	this.context = canvas.getContext('2d');
 	
-	if ( c ){
+	// Canvas supported, let's go
+	if ( this.context ){
+		
+		// Setup the canvas sizing and retina support
 		var canvasHolder = document.getElementById('canvas-holder');
 
-		c.canvas.width = canvasHolder.offsetWidth;
-		c.canvas.height = canvasHolder.offsetHeight;
+		this.context.canvas.width = canvasHolder.offsetWidth;
+		this.context.canvas.height = canvasHolder.offsetHeight;
 		
-		c.width = c.canvas.width;
-		c.height = c.canvas.height;
+		// add width and height properties
+		this.context.width = this.context.canvas.width;
+		this.context.height = this.context.canvas.height;
 		
 		
 		if ( window.devicePixelRatio ){
-			c.canvas.width *= window.devicePixelRatio;
-			c.canvas.height *= window.devicePixelRatio;
+			this.context.canvas.width *= window.devicePixelRatio;
+			this.context.canvas.height *= window.devicePixelRatio;
 			
-			c.width = ( c.canvas.width / window.devicePixelRatio );
-			c.height = ( c.canvas.height / window.devicePixelRatio );
+			this.context.width = ( this.context.canvas.width / window.devicePixelRatio );
+			this.context.height = ( this.context.canvas.height / window.devicePixelRatio );
 			
-			c.scale( window.devicePixelRatio, window.devicePixelRatio );
+			this.context.scale( window.devicePixelRatio, window.devicePixelRatio );
 		}
 
-		
-		window.onresize = function(){
-			c.canvas.width = canvasHolder.offsetWidth;
-			c.canvas.height = canvasHolder.offsetHeight;
-			
-			c.width = c.canvas.width;
-			c.height = c.canvas.height;
-			
-			if ( window.devicePixelRatio ){
-				c.canvas.width *= window.devicePixelRatio;
-				c.canvas.height *= window.devicePixelRatio;
+		(function(c){
+			window.onresize = function(){
+				c.canvas.width = canvasHolder.offsetWidth;
+				c.canvas.height = canvasHolder.offsetHeight;
 				
-				c.width = ( c.canvas.width / window.devicePixelRatio );
-				c.height = ( c.canvas.height / window.devicePixelRatio );
+				c.width = c.canvas.width;
+				c.height = c.canvas.height;
 				
-				c.scale( window.devicePixelRatio, window.devicePixelRatio );
+				if ( window.devicePixelRatio ){
+					c.canvas.width *= window.devicePixelRatio;
+					c.canvas.height *= window.devicePixelRatio;
+					
+					c.width = ( c.canvas.width / window.devicePixelRatio );
+					c.height = ( c.canvas.height / window.devicePixelRatio );
+					
+					c.scale( window.devicePixelRatio, window.devicePixelRatio );
+				}
 			}
-			
-		};
-		
-		
-		// Request animaton
-		var animateDraw = function animateDraw(cb){
+		})(this.context);
 
-			
+
+
+		// request animation frame and add dt
+		var _context = this.context;
+		this.animateDraw = function animateDraw(cb){
 			var time;
 			var draw = function draw(){
 				window.requestAnimationFrame( draw );
 				var now = new Date().getTime();
-				c.dt = now - ( time || now );
+				_context.dt = now - ( time || now );
 				time = now;
-				cb(c);
+				cb();
 			}();
-			
-			
 		}
-		animateDraw( draw );
 		
-		return true;
+		return this;
 	} else {
-		return false;
+		return null;
 	}
 };
 
