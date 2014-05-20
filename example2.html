@@ -1,0 +1,299 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Simple Canvas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="SimpleCanvas.js" type="text/javascript"></script>
+<script src="Vectors.js" type="text/javascript"></script>
+<script src="stats.min.js" type="text/javascript"></script>
+<script	type="text/javascript">
+
+// Constants
+var TWO_PI = Math.PI*2;
+
+
+boidImage = undefined;
+var sprites = false;
+
+// BOID Class
+function Boid( initX, initY, initSize, others ){
+	
+	this.id = others.length;
+
+	//////////////////////////////
+	this.position = new Vector( initX, initY );
+	this.size = 5 + Math.random()*initSize;
+
+	this.maxSpeed = 3;
+	var bsFactor = 1.3; // bounds strength
+	this.boundsStrength = this.maxSpeed*bsFactor;
+	var margin = this.size * 5;
+
+
+	this.speed = new Vector( Math.random()*2 -1, Math.random()*2 -1 );
+	this.speed.scale(this.maxSpeed);
+	
+	// wander vars and buffer
+	var wanderBuffer = [];
+	for ( var i = 0; i < 30; i++ ){
+		wanderBuffer[i] = new Vector( Math.random()*2 - 1, Math.random()*2 -1 );
+	}
+	
+	var pr = 100; // proximity radius
+	var maxRotation = TWO_PI * 0.01; // maximum rotation
+	
+	//////////////////////////////
+	
+	// Random wander
+	this.wander = function wander(){
+		// Wander
+		var wander = new Vector( 0, 0 );
+		wanderBuffer.shift();
+		wanderBuffer.push( new Vector(Math.random()*2 - 1, Math.random()*2 -1) );
+		for( var i = 0; i < wanderBuffer.length; i++ ){
+			wander.x += wanderBuffer[i].x;
+			wander.y += wanderBuffer[i].y;
+		}
+		
+		return wander;
+	};
+	
+	
+	
+	// Bounds forces
+	this.bounds = function bounds(){
+
+		// BOUNDS
+		// boundaries
+		var bounds = new Vector(0,0);
+
+		var mxr = ( this.position.x - (c.width - margin) )/ margin;
+		var mxl = 1- ( this.position.x / margin );
+		var myt = 1- ( this.position.y / margin );
+		var myb = ( this.position.y - (c.height - margin) )/ margin;
+		
+		//console.log( mxl );
+		if ( mxr > 0 ) bounds.x -= mxr * this.boundsStrength;
+		if ( mxl > 0 ) bounds.x += mxl * this.boundsStrength;
+		if ( myt > 0 ) bounds.y += myt * this.boundsStrength;
+		if ( myb > 0 ) bounds.y -= myb * this.boundsStrength;
+		
+		return bounds;
+	};
+	
+	
+	this.flock = function flock(){
+	
+		var separation = new Vector(0,0);
+		var separation2 = new Vector(0,0); // second level of separation
+		var alignment = new Vector(0,0);
+		var cohesion = new Vector(0,0);
+	
+		// loop through all the boids
+		for( var i = 0; i < others.length; i++ ){
+			if ( others[i].id !== this.id ){
+			
+				var dist = new Vector(0,0);
+				dist.add( this.position );
+				dist.subtract( others[i].position );
+				
+				var distMag = dist.magnitudeSqr();
+				if( distMag < pr*pr ){
+					
+					
+					alignment.add( others[i].speed );
+					cohesion.add( dist );
+					separation2.add( dist );
+					
+					if ( distMag < this.size*this.size * 2 ){
+						if ( distMag < 0.01 ) dist = new Vector( Math.random()*2 -1, Math.random()*2 -1 );
+						separation.add( dist );	
+					}
+					
+				}
+			}			
+		} // end of others
+		
+		separation.normalise();
+		separation2.normalise();
+		alignment.normalise();
+		cohesion.normalise();
+		cohesion.scale(-1);
+		
+		return {
+			'separation': separation,
+			'separation2': separation2,
+			'alignment': alignment,
+			'cohesion': cohesion
+		};
+	};
+
+	
+	// Update
+	this.update = function(){			
+		
+		var flock = this.flock();
+		
+		// Add forces
+		this.speed.add( this.wander().scale( 0.1 ) );
+		this.speed.add( flock.separation.scale( 0.8 ) );
+		this.speed.add( flock.separation2.scale( 0.2 ) );
+		this.speed.add( flock.alignment.scale( 0.4 ) );
+		this.speed.add( flock.cohesion.scale( 0.2 ) );
+
+		
+		
+		// Clip the speed to max speed
+		if ( this.speed.magnitudeSqr() > this.maxSpeed*this.maxSpeed ){
+			this.speed.normalise();
+			this.speed.scale( this.maxSpeed );
+		}
+
+
+		// Apply speed to position
+		this.speed.add( this.bounds() );
+		
+				
+		this.position.add( this.speed );
+	}
+	
+	// Display
+	this.display = function(){
+	
+		this.update();
+		/*
+		this.position.x += (Math.random() - 0.5) * 2;
+		this.position.y += (Math.random() - 0.5) * 2;
+		*/
+	
+		c.save();		
+			c.translate( Math.floor( this.position.x ), Math.floor( this.position.y ) );
+			c.rotate( Math.atan2(this.speed.y, this.speed.x) );
+			
+			// Draw shape
+			if (!sprites){
+				c.fillStyle = '#000';
+				c.beginPath();
+					c.moveTo( -this.size*0.3, -this.size*0.3 );
+					c.lineTo( this.size*0.5, 0 );
+					c.lineTo( -this.size*0.3, this.size*0.3 );
+				c.fill();
+			} else {
+				c.drawImage( boidImage, -this.size*0.5, -16, this.size, 16 );	
+			}
+			
+		c.restore();
+	}
+} // end of Boid
+
+
+
+
+
+
+
+var ctx;
+
+// Stats (fps meter)
+var stats = new Stats();
+stats.setMode(0);
+
+
+window.onload = function(){
+
+
+	// Stats settings
+	// Align top-left
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.left = '0px';
+	stats.domElement.style.top = '0px';
+	
+	document.body.appendChild( stats.domElement );
+	
+	var boidsCounter = document.getElementById('boidsCount');
+
+
+	// Canvas and drawing
+	var sc = new SimpleCanvas('canvas');
+	c = sc.context;
+	
+	sc.canvas.onclick = function(e){
+		sprites = !sprites;
+	};
+		
+
+	var x = 0,
+		speed = 0.2;
+		
+	boidImage = new Image();
+	boidImage.src = 'boidImage.png';
+	
+	var boids = [];
+	for ( var i = 0; i < 500; i++ ){
+		boids.push( new Boid( c.width*0.5, c.height*0.5, 20, boids ) );
+	}
+		
+	var draw = function draw(){
+
+		
+		stats.begin();
+		
+		c.clearRect(0,0, c.width, c.height);
+
+		
+		for ( var i = 0; i < boids.length; i++ ){
+			boids[i].display();			
+		}
+		
+		stats.end();
+		boidsCounter.innerHTML = boids.length + ' boids';
+		
+	};
+	sc.animateDraw(draw);
+	
+	
+
+
+};
+</script>
+<style type="text/css">
+	body, html{
+		width: 100%;
+		height: 100%;
+		margin: 0px;
+		padding: 0px;
+	}
+	#canvas-holder{
+		width: 100%;
+		height: 100%;
+		margin: 0px auto;
+		
+	}
+	#canvas{
+		display: block;
+		width: 100%;
+		height: 100%;
+		display: block;
+		background: #f5f5f5;
+	}	
+	#boidsCount{
+		position: absolute;
+		background: #fff;
+		top: 0px;
+		right: 0px;
+		width: 100px;
+		height: 20px;
+	}
+</style>
+</head>
+<body>
+<div id="canvas-holder">
+	<canvas id="canvas" width="300px" height="300px">Your browser is too old. Update now!</canvas>
+</div>
+<div id="boidsCount">
+
+</div>
+
+</body>
+</html>
