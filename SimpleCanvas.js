@@ -1,6 +1,5 @@
 /*
 	Simple Canvas helper lib by Peter Koraca
-	MIT Licence
 */
 var SimpleCanvas = function SimpleCanvas( canvasid ){
 
@@ -38,8 +37,8 @@ var SimpleCanvas = function SimpleCanvas( canvasid ){
 
 
 	// SimpleCanvas
-	var canvas = document.getElementById( canvasid );
-	this.context = canvas.getContext('2d');
+	this.canvas = document.getElementById( canvasid );
+	this.context = this.canvas.getContext('2d');
 	
 	// Canvas supported, let's go
 	if ( this.context ){
