@@ -37,67 +37,124 @@ var SimpleCanvas = function SimpleCanvas( canvasid ){
 
 
 	// SimpleCanvas
-	this.canvas = document.getElementById( canvasid );
-	this.context = this.canvas.getContext('2d');
+	this.canvas = document.getElementById( canvasid ); // actual canvas
+	this.offCanvas = document.createElement('canvas'); // offscreen canvas
+
+	this.realContext = this.canvas.getContext('2d'); // the actual context
+	this.context = this.offCanvas.getContext('2d'); // offscreen context - the one you actually draw to
 	
 	// Canvas supported, let's go
-	if ( this.context ){
+	if ( this.realContext && this.context ){
 		
 		// Setup the canvas sizing and retina support
 		var canvasHolder = document.getElementById('canvas-holder');
 
+
+		// real
+		this.realContext.canvas.width = canvasHolder.offsetWidth;
+		this.realContext.canvas.height = canvasHolder.offsetHeight;
+
+		// offscreen
 		this.context.canvas.width = canvasHolder.offsetWidth;
-		this.context.canvas.height = canvasHolder.offsetHeight;
+		this.context.canvas.height = canvasHolder.offsetHeight;	
 		
+
 		// add width and height properties
+		this.realContext.width = this.context.canvas.width;
+		this.realContext.height = this.context.canvas.height;
+		
 		this.context.width = this.context.canvas.width;
-		this.context.height = this.context.canvas.height;
+		this.context.height = this.context.canvas.height;				
 		
 		
+		// Retina
 		if ( window.devicePixelRatio ){
+
+			// real
+			this.realContext.canvas.width *= window.devicePixelRatio;
+			this.realContext.canvas.height *= window.devicePixelRatio;
+			// offscreen
 			this.context.canvas.width *= window.devicePixelRatio;
 			this.context.canvas.height *= window.devicePixelRatio;
 			
+			// real
+			this.realContext.width = ( this.context.canvas.width / window.devicePixelRatio );
+			this.realContext.height = ( this.context.canvas.height / window.devicePixelRatio );
+			// offscreen			
 			this.context.width = ( this.context.canvas.width / window.devicePixelRatio );
 			this.context.height = ( this.context.canvas.height / window.devicePixelRatio );
 			
+			
+			this.realContext.scale( window.devicePixelRatio, window.devicePixelRatio );
 			this.context.scale( window.devicePixelRatio, window.devicePixelRatio );
 		}
 
-		(function(c){
+		(function( realContext, offContext){
 			window.onresize = function(){
-				c.canvas.width = canvasHolder.offsetWidth;
-				c.canvas.height = canvasHolder.offsetHeight;
 				
-				c.width = c.canvas.width;
-				c.height = c.canvas.height;
+				realContext.canvas.width = canvasHolder.offsetWidth;
+				realContext.canvas.height = canvasHolder.offsetHeight;
+				
+				offContext.canvas.width = canvasHolder.offsetWidth;
+				offContext.canvas.height = canvasHolder.offsetHeight;
+				
+				
+				realContext.width = realContext.canvas.width;
+				realContext.height = realContext.canvas.height;
+				
+				offContext.width = offContext.canvas.width;
+				offContext.height = offContext.canvas.height;
 				
 				if ( window.devicePixelRatio ){
-					c.canvas.width *= window.devicePixelRatio;
-					c.canvas.height *= window.devicePixelRatio;
+					// real
+					realContext.canvas.width *= window.devicePixelRatio;
+					realContext.canvas.height *= window.devicePixelRatio;
 					
-					c.width = ( c.canvas.width / window.devicePixelRatio );
-					c.height = ( c.canvas.height / window.devicePixelRatio );
+					realContext.width = ( realContext.canvas.width / window.devicePixelRatio );
+					realContext.height = ( realContext.canvas.height / window.devicePixelRatio );
 					
-					c.scale( window.devicePixelRatio, window.devicePixelRatio );
+					realContext.scale( window.devicePixelRatio, window.devicePixelRatio );
+					
+					// offscree
+					offContext.canvas.width *= window.devicePixelRatio;
+					offContext.canvas.height *= window.devicePixelRatio;
+					
+					offContext.width = ( offContext.canvas.width / window.devicePixelRatio );
+					offContext.height = ( offContext.canvas.height / window.devicePixelRatio );
+					
+					offContext.scale( window.devicePixelRatio, window.devicePixelRatio );					
 				}
 			}
-		})(this.context);
+		})(this.realContext, this.context);
 
 
+		// AnimateDraw
+		// request animation frame and add dt		
+		this.animateDraw = function( cb ){
 
-		// request animation frame and add dt
-		var _context = this.context;
-		this.animateDraw = function animateDraw(cb){
+			var _rctx = this.realContext;
+			var _octx = this.context;
+			var _offcanvas = this.offCanvas;
+			
 			var time;
 			var draw = function draw(){
+				
 				window.requestAnimationFrame( draw );
+				
 				var now = new Date().getTime();
-				_context.dt = now - ( time || now );
+				_octx.dt = now - ( time || now );
+				_rctx.dt = _octx.dt;
 				time = now;
-				cb();
+				
+				cb(); // draw things (onto the offscreen canvas)
+				
+				// make the drawing visible
+				_rctx.clearRect( 0, 0, _rctx.width, _rctx.height );
+				_rctx.drawImage( _offcanvas, 0, 0 );
+				
 			}();
-		}
+			
+		};
 		
 		return this;
 	} else {
