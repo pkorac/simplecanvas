@@ -1,40 +1,68 @@
 /*
 	Simple Canvas helper lib by Peter Koraca
 */
-var SimpleCanvas = function SimpleCanvas( canvasid ){
+var SimpleCanvas = function SimpleCanvas(){
+};
 
+
+//////////////////////////////////////////////////
+
+// Object.create fallback implementation
+SimpleCanvas.prototype.ocFallback = function(){
+	if( typeof Object.create !== 'function' ){
+		Object.create = function (o) {
+	        function F() {}
+	        F.prototype = o;
+	        return new F();
+	    };
+	}
+}
+
+
+//////////////////////////////////////////////////
+
+// Setup the request animation frame
+
+SimpleCanvas.prototype.setupAnimFrame = function(){
 	// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 	// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
 	 
 	// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
 	 
 	// MIT license
-	(function() {
-	    var lastTime = 0;
-	    var vendors = ['ms', 'moz', 'webkit', 'o'];
-	    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-	        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-	        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
-	                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
-	    }
-	 
-	    if (!window.requestAnimationFrame)
-	        window.requestAnimationFrame = function(callback, element) {
-	            var currTime = new Date().getTime();
-	            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-	            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
-	              timeToCall);
-	            lastTime = currTime + timeToCall;
-	            return id;
-	        };
-	 
-	    if (!window.cancelAnimationFrame)
-	        window.cancelAnimationFrame = function(id) {
-	            clearTimeout(id);
-	        };
-	}());
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}
+
+//////////////////////////////////////////////////
+
+// Setup the canvas
 
 
+SimpleCanvas.prototype.canvas = function( canvasid ){
+
+	this.ocFallback();
+	this.setupAnimFrame();
 
 	// SimpleCanvas
 	this.canvas = document.getElementById( canvasid ); // actual canvas
@@ -48,88 +76,120 @@ var SimpleCanvas = function SimpleCanvas( canvasid ){
 		
 		// Setup the canvas sizing and retina support
 		var canvasHolder = document.getElementById('canvas-holder');
-
+		
+		var holderWidth = canvasHolder.offsetWidth;
+		var holderHeight = canvasHolder.offsetHeight;
 
 		// real
-		this.realContext.canvas.width = canvasHolder.offsetWidth;
-		this.realContext.canvas.height = canvasHolder.offsetHeight;
-
+		this.canvas.width = holderWidth;
+		this.canvas.height = holderHeight;
+		
 		// offscreen
-		this.context.canvas.width = canvasHolder.offsetWidth;
-		this.context.canvas.height = canvasHolder.offsetHeight;	
+		this.offCanvas.width = holderWidth;
+		this.offCanvas.height = holderHeight;
 		
 
 		// add width and height properties
-		this.realContext.width = this.context.canvas.width;
-		this.realContext.height = this.context.canvas.height;
+		this.realContext.width = holderWidth;
+		this.realContext.height = holderHeight;
 		
-		this.context.width = this.context.canvas.width;
-		this.context.height = this.context.canvas.height;				
-		
+		this.context.width = holderWidth;
+		this.context.height = holderHeight;		
+
 		
 		// Retina
 		if ( window.devicePixelRatio ){
 
+			var ratio = window.devicePixelRatio;
+			
+			
 			// real
-			this.realContext.canvas.width *= window.devicePixelRatio;
-			this.realContext.canvas.height *= window.devicePixelRatio;
+			this.canvas.width = holderWidth * ratio;
+			this.canvas.height = holderHeight * ratio;
+						
 			// offscreen
-			this.context.canvas.width *= window.devicePixelRatio;
-			this.context.canvas.height *= window.devicePixelRatio;
+			this.offCanvas.width = holderWidth * ratio;
+			this.offCanvas.height = holderHeight * ratio;
 			
-			// real
-			this.realContext.width = ( this.context.canvas.width / window.devicePixelRatio );
-			this.realContext.height = ( this.context.canvas.height / window.devicePixelRatio );
-			// offscreen			
-			this.context.width = ( this.context.canvas.width / window.devicePixelRatio );
-			this.context.height = ( this.context.canvas.height / window.devicePixelRatio );
+	
+			// add width and height properties
+			this.realContext.width = holderWidth;
+			this.realContext.height = holderHeight;
+			
+			this.context.width = holderWidth;
+			this.context.height = holderHeight;			
 			
 			
-			this.realContext.scale( window.devicePixelRatio, window.devicePixelRatio );
-			this.context.scale( window.devicePixelRatio, window.devicePixelRatio );
+			
+			this.realContext.scale( ratio, ratio);
+			this.context.scale( ratio, ratio );
+
+			
 		}
+		
+		
+		
 
 		(function( realContext, offContext){
+		
+			
 			window.onresize = function(){
 				
-				realContext.canvas.width = canvasHolder.offsetWidth;
-				realContext.canvas.height = canvasHolder.offsetHeight;
+				// Setup the canvas sizing and retina support
+				var canvasHolder = document.getElementById('canvas-holder');
 				
-				offContext.canvas.width = canvasHolder.offsetWidth;
-				offContext.canvas.height = canvasHolder.offsetHeight;
+				var holderWidth = canvasHolder.offsetWidth;
+				var holderHeight = canvasHolder.offsetHeight;
+		
+				// real
+				this.canvas.width = holderWidth;
+				this.canvas.height = holderHeight;
 				
+				// offscreen
+				this.offCanvas.width = holderWidth;
+				this.offCanvas.height = holderHeight;
 				
-				realContext.width = realContext.canvas.width;
-				realContext.height = realContext.canvas.height;
+		
+				// add width and height properties
+				this.realContext.width = holderWidth;
+				this.realContext.height = holderHeight;
 				
-				offContext.width = offContext.canvas.width;
-				offContext.height = offContext.canvas.height;
+				this.context.width = holderWidth;
+				this.context.height = holderHeight;		
+		
 				
+				// Retina
 				if ( window.devicePixelRatio ){
+		
+					var ratio = window.devicePixelRatio;
+					
+					
 					// real
-					realContext.canvas.width *= window.devicePixelRatio;
-					realContext.canvas.height *= window.devicePixelRatio;
+					this.canvas.width = holderWidth * ratio;
+					this.canvas.height = holderHeight * ratio;
+								
+					// offscreen
+					this.offCanvas.width = holderWidth * ratio;
+					this.offCanvas.height = holderHeight * ratio;
 					
-					realContext.width = ( realContext.canvas.width / window.devicePixelRatio );
-					realContext.height = ( realContext.canvas.height / window.devicePixelRatio );
+			
+					// add width and height properties
+					this.realContext.width = holderWidth;
+					this.realContext.height = holderHeight;
 					
-					realContext.scale( window.devicePixelRatio, window.devicePixelRatio );
+					this.context.width = holderWidth;
+					this.context.height = holderHeight;
 					
-					// offscree
-					offContext.canvas.width *= window.devicePixelRatio;
-					offContext.canvas.height *= window.devicePixelRatio;
 					
-					offContext.width = ( offContext.canvas.width / window.devicePixelRatio );
-					offContext.height = ( offContext.canvas.height / window.devicePixelRatio );
-					
-					offContext.scale( window.devicePixelRatio, window.devicePixelRatio );					
+					// no scaling because it's 'additive'
 				}
 			}
+			
 		})(this.realContext, this.context);
 
 
 		// AnimateDraw
-		// request animation frame and add dt		
+		// request animation frame and add dt
 		this.animateDraw = function( cb ){
 
 			var _rctx = this.realContext;
@@ -145,12 +205,13 @@ var SimpleCanvas = function SimpleCanvas( canvasid ){
 				_octx.dt = now - ( time || now );
 				_rctx.dt = _octx.dt;
 				time = now;
+
 				
 				cb(); // draw things (onto the offscreen canvas)
 				
 				// make the drawing visible
 				_rctx.clearRect( 0, 0, _rctx.width, _rctx.height );
-				_rctx.drawImage( _offcanvas, 0, 0 );
+				_rctx.drawImage( _offcanvas, 0, 0, _octx.width, _octx.height );
 				
 			}();
 			
@@ -161,5 +222,8 @@ var SimpleCanvas = function SimpleCanvas( canvasid ){
 		return null;
 	}
 };
+
+// Global pollution
+var sc = new SimpleCanvas();
 
 // Have fun
