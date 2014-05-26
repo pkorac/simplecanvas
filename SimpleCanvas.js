@@ -142,20 +142,20 @@ SimpleCanvas.prototype.canvas = function( canvasid ){
 				var holderHeight = canvasHolder.offsetHeight;
 		
 				// real
-				this.canvas.width = holderWidth;
-				this.canvas.height = holderHeight;
+				realContext.canvas.width = holderWidth;
+				realContext.canvas.height = holderHeight;
 				
 				// offscreen
-				this.offCanvas.width = holderWidth;
-				this.offCanvas.height = holderHeight;
+				offContext.canvas.width = holderWidth;
+				offContext.canvas.height = holderHeight;
 				
 		
 				// add width and height properties
-				this.realContext.width = holderWidth;
-				this.realContext.height = holderHeight;
+				realContext.width = holderWidth;
+				realContext.height = holderHeight;
 				
-				this.context.width = holderWidth;
-				this.context.height = holderHeight;		
+				offContext.width = holderWidth;
+				offContext.height = holderHeight;		
 		
 				
 				// Retina
@@ -165,20 +165,20 @@ SimpleCanvas.prototype.canvas = function( canvasid ){
 					
 					
 					// real
-					this.canvas.width = holderWidth * ratio;
-					this.canvas.height = holderHeight * ratio;
+					realContext.canvas.width = holderWidth * ratio;
+					realContext.canvas.height = holderHeight * ratio;
 								
 					// offscreen
-					this.offCanvas.width = holderWidth * ratio;
-					this.offCanvas.height = holderHeight * ratio;
+					offContext.canvas.width = holderWidth * ratio;
+					offContext.canvas.height = holderHeight * ratio;
 					
 			
 					// add width and height properties
-					this.realContext.width = holderWidth;
-					this.realContext.height = holderHeight;
+					realContext.width = holderWidth;
+					realContext.height = holderHeight;
 					
-					this.context.width = holderWidth;
-					this.context.height = holderHeight;
+					offContext.width = holderWidth;
+					offContext.height = holderHeight;
 					
 					
 					// no scaling because it's 'additive'
