@@ -59,7 +59,7 @@ SimpleCanvas.prototype.setupAnimFrame = function(){
 // Setup the canvas
 
 
-SimpleCanvas.prototype.canvas = function( canvasid ){
+SimpleCanvas.prototype.canvas = function( canvasid, canvasHolder ){
 
 	this.ocFallback();
 	this.setupAnimFrame();
@@ -75,7 +75,7 @@ SimpleCanvas.prototype.canvas = function( canvasid ){
 	if ( this.realContext && this.context ){
 		
 		// Setup the canvas sizing and retina support
-		var canvasHolder = document.getElementById('canvas-holder');
+		var canvasHolder = document.getElementById(canvasHolder);
 		
 		var holderWidth = canvasHolder.offsetWidth;
 		var holderHeight = canvasHolder.offsetHeight;
