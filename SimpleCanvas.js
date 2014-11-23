@@ -76,17 +76,19 @@ SimpleCanvas.prototype.canvas = function( canvasid, canvasHolder ){
 		
 		// Setup the canvas sizing and retina support
 		var canvasHolder = document.getElementById(canvasHolder);
+		var ratio = window.devicePixelRatio || 2;		
 		
 		var holderWidth = canvasHolder.offsetWidth;
 		var holderHeight = canvasHolder.offsetHeight;
 
+
 		// real
-		this.canvas.width = holderWidth;
-		this.canvas.height = holderHeight;
-		
+		this.canvas.width = holderWidth * ratio;
+		this.canvas.height = holderHeight * ratio;
+					
 		// offscreen
-		this.offCanvas.width = holderWidth;
-		this.offCanvas.height = holderHeight;
+		this.offCanvas.width = holderWidth * ratio;
+		this.offCanvas.height = holderHeight * ratio;
 		
 
 		// add width and height properties
@@ -94,60 +96,28 @@ SimpleCanvas.prototype.canvas = function( canvasid, canvasHolder ){
 		this.realContext.height = holderHeight;
 		
 		this.context.width = holderWidth;
-		this.context.height = holderHeight;		
-
+		this.context.height = holderHeight;			
 		
-		// Retina
-		if ( window.devicePixelRatio ){
-
-			var ratio = window.devicePixelRatio;
-			
-			
-			// real
-			this.canvas.width = holderWidth * ratio;
-			this.canvas.height = holderHeight * ratio;
-						
-			// offscreen
-			this.offCanvas.width = holderWidth * ratio;
-			this.offCanvas.height = holderHeight * ratio;
-			
-	
-			// add width and height properties
-			this.realContext.width = holderWidth;
-			this.realContext.height = holderHeight;
-			
-			this.context.width = holderWidth;
-			this.context.height = holderHeight;			
-			
-			
-			
-			this.realContext.scale( ratio, ratio);
-			this.context.scale( ratio, ratio );
-
-			
-		}
-		
-		
+		this.realContext.scale( ratio, ratio);
+		this.context.scale( ratio, ratio );
 		
 
-		(function( realContext, offContext){
-		
+
+
+		(function( realContext, offContext, ratio){
 			
 			window.onresize = function(){
 				
-				// Setup the canvas sizing and retina support
-				var canvasHolder = document.getElementById('canvas-holder');
-				
 				var holderWidth = canvasHolder.offsetWidth;
 				var holderHeight = canvasHolder.offsetHeight;
-		
-				// real
-				realContext.canvas.width = holderWidth;
-				realContext.canvas.height = holderHeight;
 				
+				// real
+				realContext.canvas.width = holderWidth * ratio;
+				realContext.canvas.height = holderHeight * ratio;
+							
 				// offscreen
-				offContext.canvas.width = holderWidth;
-				offContext.canvas.height = holderHeight;
+				offContext.canvas.width = holderWidth * ratio;
+				offContext.canvas.height = holderHeight * ratio;
 				
 		
 				// add width and height properties
@@ -155,38 +125,16 @@ SimpleCanvas.prototype.canvas = function( canvasid, canvasHolder ){
 				realContext.height = holderHeight;
 				
 				offContext.width = holderWidth;
-				offContext.height = holderHeight;		
-		
+				offContext.height = holderHeight;			
 				
-				// Retina
-				if ( window.devicePixelRatio ){
-		
-					var ratio = window.devicePixelRatio;
-					
-					
-					// real
-					realContext.canvas.width = holderWidth * ratio;
-					realContext.canvas.height = holderHeight * ratio;
-								
-					// offscreen
-					offContext.canvas.width = holderWidth * ratio;
-					offContext.canvas.height = holderHeight * ratio;
-					
-			
-					// add width and height properties
-					realContext.width = holderWidth;
-					realContext.height = holderHeight;
-					
-					offContext.width = holderWidth;
-					offContext.height = holderHeight;
-					
-					
-					// no scaling because it's 'additive'
-				}
+				realContext.scale( ratio, ratio);
+				offContext.scale( ratio, ratio );
+				
+				
 			}
 			
-		})(this.realContext, this.context);
-
+		})(this.realContext, this.context, ratio);
+				
 
 		// AnimateDraw
 		// request animation frame and add dt
